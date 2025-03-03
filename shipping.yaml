@@ -1,3 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shipping-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: nutanix-volume-iscsi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -15,6 +26,8 @@ spec:
       labels:
         name: shipping
     spec:
+      securityContext:
+        fsGroup: 10001
       containers:
       - name: shipping
         image: weaveworksdemos/shipping:0.4.8
@@ -43,11 +56,11 @@ spec:
           readOnlyRootFilesystem: true
         volumeMounts:
         - mountPath: /tmp
-          name: tmp-volume
+          name: shipping-volume
       volumes:
-        - name: tmp-volume
-          emptyDir:
-            medium: Memory
+        - name: shipping-volume
+          persistentVolumeClaim:
+            claimName: shipping-data
       nodeSelector:
         beta.kubernetes.io/os: linux
 ---
